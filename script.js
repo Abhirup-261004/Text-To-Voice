@@ -1,24 +1,40 @@
 let speech = new SpeechSynthesisUtterance();
 let voices = [];
-let voiceSelect = document.querySelector("select");
+const voiceSelect = document.querySelector("select");
+const speakButton = document.querySelector("button");
+const textarea = document.querySelector("textarea");
 
-// Load voices
+// Load and populate voices
 function populateVoices() {
     voices = window.speechSynthesis.getVoices();
-    voiceSelect.innerHTML = ""; // clear previous options
+
+    if (voices.length === 0) {
+        // Retry after a short delay if voices not loaded
+        setTimeout(populateVoices, 200);
+        return;
+    }
+
+    voiceSelect.innerHTML = ""; // Clear previous options
+
     voices.forEach((voice, i) => {
-        const option = new Option(voice.name, i);
+        const option = new Option(`${voice.name} (${voice.lang})`, i);
         voiceSelect.add(option);
     });
-    speech.voice = voices[0]; // default voice
+
+    speech.voice = voices[0]; // Default voice
 }
 
+// Trigger voice loading
+populateVoices();
 window.speechSynthesis.onvoiceschanged = populateVoices;
-window.speechSynthesis.getVoices(); // preload (may help in some browsers)
 
-document.querySelector("button").addEventListener("click", () => {
+// Speak text on button click
+speakButton.addEventListener("click", () => {
     const selectedIndex = voiceSelect.selectedIndex;
     speech.voice = voices[selectedIndex];
-    speech.text = document.querySelector("textarea").value;
-    window.speechSynthesis.speak(speech);
+    speech.text = textarea.value.trim();
+
+    if (speech.text !== "") {
+        window.speechSynthesis.speak(speech);
+    }
 });
